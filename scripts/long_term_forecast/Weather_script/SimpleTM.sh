@@ -1,100 +1,124 @@
 export CUDA_VISIBLE_DEVICES=0
-model_name=TimeXer
+model_name=SimpleTM
 
 python3 -u run.py \
-  --task_name long_term_forecast \
   --is_training 1 \
+  --lradj 'TST' \
+  --patience 3 \
   --root_path ../dataset/weather/ \
   --data_path weather.csv \
-  --model_id weather_96_96 \
-  --model $model_name \
+  --model_id Weather \
+  --model "$model_name" \
   --data custom \
   --features M \
   --seq_len 96 \
-  --label_len 48 \
   --pred_len 96 \
-  --e_layers 1 \
-  --factor 3 \
+  --e_layers 4 \
+  --d_model 32 \
+  --d_ff 32 \
+  --learning_rate 0.01 \
+  --batch_size 256 \
+  --use_norm 1 \
+  --wv "db4" \
+  --m 1 \
   --enc_in 21 \
   --dec_in 21 \
   --c_out 21 \
   --des 'Exp' \
-  --d_model 256 \
-  --d_ff 512 \
-  --batch_size 4 \
   --itr 1 \
+  --alpha 0.3 \
+  --l1_weight 5e-05 \
   --clusterGNN True \
   --num_clusters 7
 
+
 python3 -u run.py \
-  --task_name long_term_forecast \
   --is_training 1 \
+  --lradj 'TST' \
+  --patience 3 \
   --root_path ../dataset/weather/ \
   --data_path weather.csv \
-  --model_id weather_96_192 \
-  --model $model_name \
+  --model_id Weather \
+  --model "$model_name" \
   --data custom \
   --features M \
   --seq_len 96 \
-  --label_len 48 \
   --pred_len 192 \
-  --e_layers 3 \
-  --factor 3 \
+  --e_layers 4 \
+  --d_model 32 \
+  --d_ff 32 \
+  --learning_rate 0.009 \
+  --batch_size 256 \
+  --use_norm 1 \
+  --wv "db4" \
+  --m 1 \
   --enc_in 21 \
   --dec_in 21 \
   --c_out 21 \
   --des 'Exp' \
-  --d_model 128 \
-  --d_ff 1024 \
-  --batch_size 4 \
   --itr 1 \
+  --alpha 0.3 \
+  --l1_weight 0.0 \
   --clusterGNN True \
   --num_clusters 7
 
 python3 -u run.py \
-  --task_name long_term_forecast \
   --is_training 1 \
+  --lradj 'TST' \
+  --patience 3 \
   --root_path ../dataset/weather/ \
   --data_path weather.csv \
-  --model_id weather_96_336 \
-  --model $model_name \
+  --model_id Weather \
+  --model "$model_name" \
   --data custom \
   --features M \
   --seq_len 96 \
-  --label_len 48 \
   --pred_len 336 \
   --e_layers 1 \
-  --factor 3 \
+  --d_model 32 \
+  --d_ff 32 \
+  --learning_rate 0.009 \
+  --batch_size 256 \
+  --use_norm 1 \
+  --wv "db4" \
+  --m 3 \
   --enc_in 21 \
   --dec_in 21 \
   --c_out 21 \
   --des 'Exp' \
-  --d_model 256 \
-  --batch_size 4 \
   --itr 1 \
+  --alpha 1.0 \
+  --l1_weight 5e-05 \
   --clusterGNN True \
-  --num_clusters 18 
+  --num_clusters 18
+
 
 python3 -u run.py \
-  --task_name long_term_forecast \
   --is_training 1 \
+  --lradj 'TST' \
+  --patience 3 \
   --root_path ../dataset/weather/ \
   --data_path weather.csv \
-  --model_id weather_96_720 \
-  --model $model_name \
+  --model_id Weather \
+  --model "$model_name" \
   --data custom \
   --features M \
   --seq_len 96 \
-  --label_len 48 \
   --pred_len 720 \
   --e_layers 1 \
-  --factor 3 \
+  --d_model 32 \
+  --d_ff 32 \
+  --learning_rate 0.02 \
+  --batch_size 256 \
+  --use_norm 1 \
+  --wv "db4" \
+  --m 1 \
   --enc_in 21 \
   --dec_in 21 \
   --c_out 21 \
   --des 'Exp' \
-  --d_model 128 \
-  --batch_size 4 \
   --itr 1 \
+  --alpha 0.9 \
+  --l1_weight 0.005 \
   --clusterGNN True \
   --num_clusters 13

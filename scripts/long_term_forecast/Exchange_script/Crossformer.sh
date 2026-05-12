@@ -1,4 +1,4 @@
-export CUDA_VISIBLE_DEVICES=2
+export CUDA_VISIBLE_DEVICES=0
 
 model_name=Crossformer
 
@@ -25,6 +25,7 @@ python3  -u run.py \
   --top_k 5 \
   --des 'Exp' \
   --itr 1  \
+  --clusterGNN True \
   --num_clusters 6
 
 
@@ -51,6 +52,7 @@ python3 -u run.py \
   --top_k 5 \
   --des 'Exp' \
   --itr 1 \
+  --clusterGNN True \
   --num_clusters 6
 
 python3  -u run.py \
@@ -76,6 +78,7 @@ python3  -u run.py \
   --top_k 5 \
   --des 'Exp' \
   --itr 1 \
+  --clusterGNN True \
   --num_clusters 6
 
 python3 -u run.py \
@@ -101,4 +104,5 @@ python3 -u run.py \
   --top_k 5 \
   --des 'Exp' \
   --itr  1 \
+  --clusterGNN True \
   --num_clusters 6

@@ -19,7 +19,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='TimesNet')
 
     # basic config
-    parser.add_argument('--task_name', type=str, required=True, default='long_term_forecast',
+    parser.add_argument('--task_name', type=str, default='long_term_forecast',
                         help='task name, options:[long_term_forecast, short_term_forecast, imputation, classification, anomaly_detection]')
     parser.add_argument('--is_training', type=int, required=True, default=1, help='status')
     parser.add_argument('--model_id', type=str, required=True, default='test', help='model id')
@@ -53,12 +53,6 @@ if __name__ == '__main__':
     parser.add_argument('--anomaly_ratio', type=float, default=0.25, help='prior anomaly ratio (%%)')
 
     # model define
-    parser.add_argument('--expand', type=int, default=2, help='expansion factor for Mamba')
-    parser.add_argument('--d_conv', type=int, default=4, help='conv kernel size for Mamba')
-    parser.add_argument('--tv_dt', type=int, default=0, help='whether to use time variant dt for MambaSL')
-    parser.add_argument('--tv_B', type=int, default=0, help='whether to use time variant B for MambaSL')
-    parser.add_argument('--tv_C', type=int, default=0, help='whether to use time variant C for MambaSL')
-    parser.add_argument('--use_D', type=int, default=0, help='whether to use D for MambaSL')
     parser.add_argument('--top_k', type=int, default=5, help='for TimesBlock')
     parser.add_argument('--num_kernels', type=int, default=6, help='for Inception')
     parser.add_argument('--enc_in', type=int, default=7, help='encoder input size')
@@ -75,9 +69,14 @@ if __name__ == '__main__':
                         help='whether to use distilling in encoder, using this argument means not using distilling',
                         default=True)
     parser.add_argument('--dropout', type=float, default=0.1, help='dropout')
+    parser.add_argument('--geomattn_dropout', type=float, default=0.5, help='dropout rate of the projection layer in the geometric attention')
     parser.add_argument('--embed', type=str, default='timeF',
                         help='time features encoding, options:[timeF, fixed, learned]')
     parser.add_argument('--activation', type=str, default='gelu', help='activation')
+    parser.add_argument('--do_predict', action='store_true', help='whether to predict unseen future data')
+
+
+    
     parser.add_argument('--channel_independence', type=int, default=1,
                         help='0: channel dependence 1: channel independence for FreTS model')
     parser.add_argument('--decomp_method', type=str, default='moving_avg',
@@ -97,11 +96,13 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size', type=int, default=32, help='batch size of train input data')
     parser.add_argument('--patience', type=int, default=3, help='early stopping patience')
     parser.add_argument('--learning_rate', type=float, default=0.0001, help='optimizer learning rate')
-    parser.add_argument('--des', type=str, default='test', help='exp description')
+    parser.add_argument('--des', type=str, default='Exp', help='exp description')
     parser.add_argument('--loss', type=str, default='MSE', help='loss function')
     parser.add_argument('--lradj', type=str, default='type1', help='adjust learning rate')
     parser.add_argument('--use_amp', action='store_true', help='use automatic mixed precision training', default=False)
-
+    parser.add_argument('--pct_start', type=float, default=0.2, help='Warmup ratio for the learning rate scheduler')
+   
+    
     # GPU
     parser.add_argument('--use_gpu', action='store_true', default=True, help='use gpu (default: on)')
     parser.add_argument('--no_use_gpu', action='store_false', dest='use_gpu', help='disable gpu (force cpu)')
@@ -110,6 +111,7 @@ if __name__ == '__main__':
     parser.add_argument('--use_multi_gpu', action='store_true', help='use multiple gpus', default=False)
     parser.add_argument('--devices', type=str, default='0,1,2,3', help='device ids of multile gpus')
 
+ 
     # de-stationary projector params
     parser.add_argument('--p_hidden_dims', type=int, nargs='+', default=[128, 128],
                         help='hidden layer dimensions of projector (List)')
@@ -142,7 +144,26 @@ if __name__ == '__main__':
     parser.add_argument('--discsdtw', default=False, action="store_true",
                         help="Discrimitive shapeDTW warp preset augmentation")
     parser.add_argument('--extra_tag', type=str, default="", help="Anything extra")
+    
+    parser.add_argument('--fix_seed', type=int, default=2026, help='gpu')
+    
+    
+    # SimpleTM 
+    #parser.add_argument('--exp_name', type=str, required=False, default='MTSF',
+                        #help='experiemnt name, options:[MTSF, partial_train]')
+    #parser.add_argument('--class_strategy', type=str, default='projection', help='projection/average/cls_token')
+    #parser.add_argument('--efficient_training', type=bool, default=False, help='whether to use efficient_training (exp_name should be partial train)') # See Figure 8 of our paper for the detail
+    #parser.add_argument('--partial_start_index', type=int, default=0, help='the start index of variates for partial training, ''you can select [partial_start_index, min(enc_in + partial_start_index, N)]')
+    parser.add_argument('--requires_grad', type=bool, default=True, help='Set to True to enable learnable wavelets')
+    parser.add_argument('--wv', type=str, default='db1', help='Wavelet filter type. Supports all wavelets available in PyTorch Wavelets')
+    parser.add_argument('--m', type=int, default=3, help='Number of levels for the stationary wavelet transform')
+    parser.add_argument('--kernel_size', default=None, help='Specify the length of randomly initialized wavelets (if not None)')
+    parser.add_argument('--l1_weight', type=float, default=5e-5, help='Weight of L1 loss')
+    parser.add_argument('--compile', type=bool, default=False, help='Set to True to enable compilation, which can accelerate speed but may slightly impact performance')
+    parser.add_argument('--output_attention', action='store_true',help='Set to False to output attn, which can be used to compute training loss')
+                                                                      
 
+    
     # TimeXer
     parser.add_argument('--patch_len', type=int, default=16, help='patch length')
 
@@ -158,7 +179,7 @@ if __name__ == '__main__':
                         help='DLinear: a linear layer for each variate(channel) individually')
 
     # TimeFilter
-    parser.add_argument('--alpha', type=float, default=0.1, help='KNN for Graph Construction')
+    parser.add_argument('--alpha', type=float, default=0.1, help='TimeFilter: KNN for Graph Construction / SimpleTM: Weight of the inner product score in geometric attention')
     parser.add_argument('--top_p', type=float, default=0.5, help='Dynamic Routing in MoE')
     parser.add_argument('--pos', type=int, choices=[0, 1], default=1, help='Positional Embedding. Set pos to 0 or 1')
 
@@ -183,42 +204,23 @@ if __name__ == '__main__':
     print_args(args)
 
 
-    if args.task_name == 'long_term_forecast':
-        from exp.exp_long_term_forecasting import Exp_Long_Term_Forecast
-        Exp = Exp_Long_Term_Forecast
-    elif args.task_name == 'short_term_forecast':
-        from exp.exp_short_term_forecasting import Exp_Short_Term_Forecast
-        Exp = Exp_Short_Term_Forecast
-    elif args.task_name == 'imputation':
-        from exp.exp_imputation import Exp_Imputation
-        Exp = Exp_Imputation
-    elif args.task_name == 'anomaly_detection':
-        from exp.exp_anomaly_detection import Exp_Anomaly_Detection
-        Exp = Exp_Anomaly_Detection
-    elif args.task_name == 'classification':
-        from exp.exp_classification import Exp_Classification
-        Exp = Exp_Classification
-    elif args.task_name == 'zero_shot_forecast':
-        from exp.exp_zero_shot_forecasting import Exp_Zero_Shot_Forecast
-        Exp = Exp_Zero_Shot_Forecast
-    else:
-        from exp.exp_long_term_forecasting import Exp_Long_Term_Forecast
-        Exp = Exp_Long_Term_Forecast
-
+    from exp.exp_long_term_forecasting import Exp_Long_Term_Forecast
+    Exp = Exp_Long_Term_Forecast
+    
     if args.is_training:
         for ii in range(args.itr):
-            fix_seed = 2025 + ii
-            random.seed(fix_seed)
-            np.random.seed(fix_seed)
-            torch.manual_seed(fix_seed)
-            torch.cuda.manual_seed_all(fix_seed)
+            temp_seed = args.fix_seed + ii
+            random.seed(temp_seed)
+            np.random.seed(temp_seed)
+            torch.manual_seed(temp_seed)
+            torch.cuda.manual_seed_all(temp_seed)
             
             # setting record of experiments
             exp = Exp(args)  # set experiments
-            setting = 'g{}_c{}_{}_{}_{}_{}_{}_ft{}_sl{}_ll{}_pl{}_dm{}_nh{}_el{}_dl{}_df{}_expand{}_dc{}_fc{}_eb{}_dt{}_{}_seed{}_iter{}'.format(
+            setting = '{}_clusterGNN{}_cluster{}_{}_{}_{}_{}_ft{}_sl{}_ll{}_pl{}_dm{}_nh{}_el{}_dl{}_df{}_fc{}_eb{}_dt{}_sd{}_itr{}'.format(
+                args.des,
                 args.clusterGNN,
                 args.num_clusters,
-                args.des,
                 args.task_name,
                 args.model_id,
                 args.model,
@@ -232,22 +234,12 @@ if __name__ == '__main__':
                 args.e_layers,
                 args.d_layers,
                 args.d_ff,
-                args.expand,
-                args.d_conv,
                 args.factor,
                 args.embed,
                 args.distil,
-                args.des, 
-                fix_seed,
+                args.fix_seed,
                 ii)
             
-            # Override setting for specific model to ensure proper checkpoint naming and logging
-            if args.model == 'MambaSingleLayer' and args.task_name == 'classification':
-                setting = f'{args.task_name}_CLS_{args.model_id}_{args.model}_{args.data}_ft{args.features}' \
-                        + f'_sl{args.seq_len}_ll{args.label_len}_pl{args.pred_len}_dm{args.d_model}_ds{args.d_ff}' \
-                        + f'_expand{args.expand}_dc{args.d_conv}_nk{args.num_kernels}' \
-                        + f'_tvdt{int(args.tv_dt)}_tvB{int(args.tv_B)}_tvC{int(args.tv_C)}_useD{int(args.use_D)}_{args.des}_{ii}'
-
             print('>>>>>>>start training : {}>>>>>>>>>>>>>>>>>>>>>>>>>>'.format(setting))
             exp.train(setting)
 
@@ -261,20 +253,19 @@ if __name__ == '__main__':
     else:
         exp = Exp(args)  # set experiments
         ii = 0
-        random.seed(fix_seed)
-        np.random.seed(fix_seed)
-        torch.manual_seed(fix_seed)
-        torch.cuda.manual_seed_all(fix_seed)
+        random.seed(args.fix_seed)
+        np.random.seed(args.fix_seed)
+        torch.manual_seed(args.fix_seed)
+        torch.cuda.manual_seed_all(args.fix_seed)
             
         setting = (
-            'g{}_c{}_{}_{}_{}_{}_{}_ft{}_sl{}_ll{}_pl{}_dm{}_nh{}_el{}_dl{}_df{}_expand{}_dc{}_fc{}_eb{}_dt{}_{}_{}'
+            '{}_clusterGNN{}_cluster{}_{}_{}_{}_{}_ft{}_sl{}_ll{}_pl{}_dm{}_nh{}_el{}_dl{}_df{}_fc{}_eb{}_dt{}_sd{}_iter{}'
         ).format(
-            args.gnnGumbel,
-            args.num_clusters,
             args.des,
+            args.clusterGNN,
+            args.num_clusters,
             args.task_name,
             args.model_id,
-
             args.model,        # m
             args.data,         # dt
             args.features,     # ft
@@ -286,21 +277,12 @@ if __name__ == '__main__':
             args.e_layers,     # el
             args.d_layers,     # dl
             args.d_ff,         # df
-            args.expand,
-            args.d_conv,
             args.factor,
             args.embed,
             args.distil,
-            args.des,
+            args.fix_seed,
             ii
         )
-        
-        # Override setting for specific model to ensure proper checkpoint naming and logging
-        if args.model == 'MambaSingleLayer' and args.task_name == 'classification':
-            setting = f'{args.task_name}_CLS_{args.model_id}_{args.model}_{args.data}_ft{args.features}' \
-                    + f'_sl{args.seq_len}_ll{args.label_len}_pl{args.pred_len}_dm{args.d_model}_ds{args.d_ff}' \
-                    + f'_expand{args.expand}_dc{args.d_conv}_nk{args.num_kernels}' \
-                    + f'_tvdt{args.tv_dt}_tvB{args.tv_B}_tvC{args.tv_C}_useD{int(args.use_D)}_{args.des}_{ii}'
 
         print('>>>>>>>testing : {}<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'.format(setting))
         exp.test(setting, test=1)

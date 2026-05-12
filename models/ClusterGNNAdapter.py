@@ -15,11 +15,17 @@ import tsl
 import math
 
 class Model(MessagePassing):
-    def __init__(self,num_nodes, in_channels, out_channels, num_clusters, dropout, improved=False, 
-                    add_self_loops=False, normalize=True, bias=True, init_method='all'):
+    def __init__(self,configs):
         super(Model, self).__init__(aggr='add', node_dim=0) #  "Max" aggregation.
-        self.num_clusters = num_clusters
-        self.dropout = dropout
+        self.num_clusters = configs.num_clusters
+        self.dropout = configs.dropout
+        
+        improved=False
+        add_self_loops=False
+        normalize=True
+        bias=True
+        init_method='all'
+                    
         
         source_nodes, target_nodes = [], []
         for i in range(self.num_clusters):
@@ -28,60 +34,41 @@ class Model(MessagePassing):
                 target_nodes.append(i)
                 
         cluster_edge_index = torch.tensor([source_nodes, target_nodes], dtype=torch.long)
-        
         print("clustar edge:", cluster_edge_index.shape) # [2, num_clusters^2]
         self.register_buffer('cluster_edge_index', cluster_edge_index)
         
-        # 원본 그래프의 엣지 수와 노드 수를 저장
-        self.ori_edge_counts = []
-        self.ori_node_counts = []
         
-
-        # forward마다 실행 시간 저장
-        self.graph_exec_times = [] 
+        # configs
+        self.num_nodes = configs.enc_in
+        self.in_channels = configs.seq_len
+        self.out_channels = configs.seq_len
         
-        self.num_nodes = num_nodes
-        self.in_channels = in_channels
-        self.out_channels = out_channels
+        
+        # default
         self.improved = improved
         self.add_self_loops = add_self_loops
-        self.normalize = normalize
         self.bias = bias
         self.init_method = init_method
-
-        self.init_tau_node = 3.0
-        self.min_tau_node = 0.5
-        self.anneal_rate_node = 0.30
-
-
-        self.init_tau_edge = 2.0
-        self.min_tau_edge = 0.5
-        self.anneal_rate_edge = 0.45
+        self.normalize = normalize
         
-        self.gate = None
+        self.weight = Parameter(torch.Tensor(self.in_channels, self.out_channels))
         
-        self.weight = Parameter(torch.Tensor(in_channels, out_channels))
-
-        self.cluster_lin = torch.nn.Linear(in_channels, out_channels)
-
-        
-        self.cluster_norm = nn.LayerNorm(out_channels)
-         
+        #######################
+        ## ClusterGNN Layers ##
+        #######################
+        self.cluster_lin = torch.nn.Linear(self.in_channels, self.out_channels)
+        self.cluster_norm = nn.LayerNorm(self.out_channels)
         self.cluster_proj = nn.Sequential(
-            nn.Linear(out_channels, out_channels),
+            nn.Linear(self.out_channels, self.out_channels),
             nn.GELU(),
             nn.Dropout(p=0.3),
-            nn.Linear(out_channels, out_channels)
+            nn.Linear(self.out_channels, self.out_channels)
         )
-        self.out_norm = nn.LayerNorm(out_channels)
+        self.out_norm = nn.LayerNorm(self.out_channels)
         
-        self.gate_mlp = nn.Sequential(
-            nn.Linear(2 * out_channels, out_channels),
-            nn.GELU(),
-            nn.Dropout(p=0.3),
-            nn.Linear(out_channels, out_channels)
-        )
-        #self.gate_mlp = nn.Linear(2 * out_channels, out_channels)
+        ##################################
+        ## FFN for message construction ##
+        ##################################
         self.msg_mlp = nn.Sequential(
             nn.Linear(4 * self.out_channels, self.out_channels),
             nn.GELU(),
@@ -89,10 +76,18 @@ class Model(MessagePassing):
             nn.Linear(self.out_channels, self.out_channels)
         )
         
-        self.gate_linear = nn.Linear(out_channels * 2, out_channels)
-        
+        ####################
+        ## FFN for gating ##
+        ####################
+        self.gate_mlp = nn.Sequential(
+            nn.Linear(2 * self.out_channels, self.out_channels),
+            nn.GELU(),
+            nn.Dropout(p=0.3),
+            nn.Linear(self.out_channels, self.out_channels)
+        )
+
         if bias:
-            self.bias = Parameter(torch.Tensor(out_channels))
+            self.bias = Parameter(torch.Tensor(self.out_channels))
         else:
             self.register_parameter('bias', None)
        
@@ -101,11 +96,9 @@ class Model(MessagePassing):
         
 
     def _init_gumbel_logits_(self):
-        # self.num_nodes: 노드 수
-        # self.num_clusters: 클러스터 수
         # self.init_method: 'all' / 'random' / 'equal'
 
-        # 1. 노드 → 클러스터 할당용 logits: [num_nodes, num_clusters]
+        # 1. Node-to-cluster assignment logits: [num_nodes, num_clusters]
         if self.init_method == 'all':
             logits_cluster = 0.8 * torch.ones(self.num_nodes, self.num_clusters)
             #logits_cluster = 1e-3 * torch.randn(self.num_nodes, self.num_clusters)
@@ -119,7 +112,7 @@ class Model(MessagePassing):
         self.register_parameter('logits_cluster', Parameter(logits_cluster, requires_grad=True))
         
         
-        # 2. 클러스터 간 엣지 존재 여부 logits: [num_clusters^2, 2]
+        # 2. Edge existence logits between clusters: [num_clusters^2, 2]
         num_cluster_edges = self.num_clusters ** 2
         if self.init_method == 'all':
             #logits_edge = 1e-3 * torch.randn(num_cluster_edges, 2)
@@ -140,29 +133,26 @@ class Model(MessagePassing):
         
     
 
-    def forward(self, x,  edge_weight=None):
-        # x: > (bsz, num_nodes, seq_len)
-        #
-        # edge_index: [2, E]
-        #   Input graph connectivity. In this module, message passing is performed
-        #   on the cluster graph (self.cluster_edge_index).
-        start = time.time()
+    def forward(self, x):
+        
+        # x: MTF standard format(bsz, seq_len, num_nodes)
+        
+        x = x.permute(0, 2, 1) # >> (bsz, num_nodes, seq_len)
+        x = x.transpose(0, 1) # >> (num_nodes, bsz, seq_len)
         
         # --------------------------------------------------------------
-        # 1) 클러스터 할당 (Gumbel)
+        # 1) Cluster assignment (Gumbel)
         # --------------------------------------------------------------
-        
+                
 
-        #logits_clean =  torch.nan_to_num(self.logits_cluster, nan=0.0)
         logits_clean = torch.clamp(
             torch.nan_to_num(self.logits_cluster, nan=0.0, posinf=10.0, neginf=-10.0), # Nan만 0으로, 양의 무한대는 20으로, 음의 무한대는 -20으로 클램핑
             -10, 10
         )
-        # logits_clean = torch.clamp(logits_clean, -10, 10)
         S = F.gumbel_softmax(logits_clean, tau=0.5, hard=False)   # [N, K]
 
         # --------------------------------------------------------------
-        # 2) 클러스터 feature 생성 (노드 평균 pooling)
+        # 2) Cluster feature construction (node average pooling)
         # --------------------------------------------------------------
         cluster_mass = S.sum(dim=0).clamp_min(1e-6)            # [K]
         X_cluster = torch.einsum('nk,nbf->kbf', S, x)          # [K, B, F]
@@ -172,8 +162,9 @@ class Model(MessagePassing):
         X_cluster = self.cluster_norm(X_cluster)
         X_cluster = F.gelu(X_cluster)
         
+
         # --------------------------------------------------------------
-        # 3) 클러스터 간 edge 선택 (Gumbel)
+        # 3) Inter-cluster edge selection (Gumbel)
         # --------------------------------------------------------------
        
         logits_edge_clean = torch.clamp(
@@ -184,8 +175,9 @@ class Model(MessagePassing):
 
 
         # --------------------------------------------------------------
-        # 4) 클러스터 그래프 정규화
+        # 4) Cluster graph normalization
         # --------------------------------------------------------------
+        edge_weight = None
         if self.normalize:
             edge_index, edge_weight = gcn_norm(
                 self.cluster_edge_index,
@@ -199,7 +191,7 @@ class Model(MessagePassing):
             edge_index, edge_weight = self.cluster_edge_index, None
 
         # --------------------------------------------------------------
-        # 5) 클러스터 그래프 message passing
+        # 5) Cluster graph message passing
         # --------------------------------------------------------------
         out_cluster = self.propagate(
             edge_index,
@@ -209,9 +201,9 @@ class Model(MessagePassing):
             z=z_edge
         )   # [K, B, F]
 
-        end = time.time()
+        
         # --------------------------------------------------------------
-        # 6) 클러스터 → 노드 lifting
+        # 6) Cluster-to-node lifting
         # --------------------------------------------------------------
         cluster_vector = torch.einsum('nk,kbf->nbf', S, out_cluster)
 
@@ -223,22 +215,31 @@ class Model(MessagePassing):
         # --------------------------------------------------------------
         # 7) fusion
         # --------------------------------------------------------------
-        #x_norm = self.input_norm(x)
         fusion_input = torch.cat([x, cluster_vector], dim=-1)
         self.gate = torch.sigmoid(self.gate_mlp(fusion_input))
         gated_cluster = self.gate * cluster_vector
         out = x + gated_cluster #[N, B, F]
 
-        exec_time = end - start
-        self.graph_exec_times.append(exec_time)
 
         if self.bias is not None:
             out = out + self.bias
             
         
+        # logging용
+        with torch.no_grad():
+            self.last_gate_per_channel = self.gate.detach().mean(dim=(1, 2)).cpu()
+            
         # cleanup
         del X_cluster, out_cluster, cluster_vector, z_edge
         self.cluster_x_repr = out
+        
+        # --------------------------------------------------------------
+        # Restore original format
+        # --------------------------------------------------------------
+        out = out.transpose(0, 1)   # [B, N, L]
+        out = out.permute(0, 2, 1)  # [B, L, N]
+        
+        # backbone-compatible output format: [B, L, N]
         return out
 
     def message(self, x_i, x_j, edge_weight, z):

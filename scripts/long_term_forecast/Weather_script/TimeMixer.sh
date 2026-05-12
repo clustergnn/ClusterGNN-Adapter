@@ -42,6 +42,7 @@ python3 -u run.py \
   --down_sampling_layers $down_sampling_layers \
   --down_sampling_method avg \
   --down_sampling_window $down_sampling_window \
+  --clusterGNN True \
   --num_clusters 7
 
 
@@ -73,6 +74,7 @@ python3 -u run.py \
   --down_sampling_layers $down_sampling_layers \
   --down_sampling_method avg \
   --down_sampling_window $down_sampling_window \
+  --clusterGNN True \
   --num_clusters 7
 
 
@@ -105,6 +107,7 @@ python3 -u run.py \
   --down_sampling_layers $down_sampling_layers \
   --down_sampling_method avg \
   --down_sampling_window $down_sampling_window \
+  --clusterGNN True \
   --num_clusters 18
 
 
@@ -137,4 +140,5 @@ python3 -u run.py \
   --down_sampling_layers $down_sampling_layers \
   --down_sampling_method avg \
   --down_sampling_window $down_sampling_window \
+  --clusterGNN True \
   --num_clusters 13

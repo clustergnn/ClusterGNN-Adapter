@@ -1,10 +1,11 @@
 export CUDA_VISIBLE_DEVICES=0
+model_name=SimpleTM
 
-model_name=PatchTST
 
 python3 -u run.py \
-  --task_name long_term_forecast \
   --is_training 1 \
+  --lradj TST \
+  --patience 3 \
   --root_path ../dataset/exchange_rate/ \
   --data_path exchange_rate.csv \
   --model_id Exchange_96_96 \
@@ -12,21 +13,27 @@ python3 -u run.py \
   --data custom \
   --features M \
   --seq_len 96 \
-  --label_len 48 \
   --pred_len 96 \
-  --e_layers 2 \
-  --d_layers 1 \
-  --factor 3 \
+  --e_layers 1 \
+  --d_model 32 \
+  --d_ff 32 \
+  --learning_rate 0.006 \
+  --batch_size 256 \
+  --use_norm 1 \
+  --wv bior3.1 \
+  --m 3 \
   --enc_in 8 \
   --dec_in 8 \
   --c_out 8 \
-  --des 'Exp' \
-  --itr 1  \
+  --des Exp \
+  --itr 1 \
+  --alpha 0.3 \
+  --l1_weight 0.0005 \
   --clusterGNN True \
   --num_clusters 6
 
+
 python3 -u run.py \
-  --task_name long_term_forecast \
   --is_training 1 \
   --root_path ../dataset/exchange_rate/ \
   --data_path exchange_rate.csv \
@@ -35,21 +42,28 @@ python3 -u run.py \
   --data custom \
   --features M \
   --seq_len 96 \
-  --label_len 48 \
   --pred_len 192 \
-  --e_layers 2 \
-  --d_layers 1 \
-  --factor 3 \
+  --e_layers 1 \
+  --d_model 32 \
+  --d_ff 32 \
+  --learning_rate 0.006\
+  --batch_size 256 \
+  --use_norm 1 \
+  --wv "bior3.1" \
+  --m 1 \
+  --alpha 0.0 \
+  --l1_weight 0.005 \
   --enc_in 8 \
   --dec_in 8 \
   --c_out 8 \
   --des 'Exp' \
-  --itr 1  \
+  --d_model 128 \
+  --d_ff 128 \
+  --itr 1 \
   --clusterGNN True \
   --num_clusters 6
 
 python3 -u run.py \
-  --task_name long_term_forecast \
   --is_training 1 \
   --root_path ../dataset/exchange_rate/ \
   --data_path exchange_rate.csv \
@@ -58,21 +72,27 @@ python3 -u run.py \
   --data custom \
   --features M \
   --seq_len 96 \
-  --label_len 48 \
   --pred_len 336 \
-  --e_layers 2 \
-  --d_layers 1 \
-  --factor 3 \
+  --e_layers 1 \
+  --d_model 64 \
+  --d_ff 64 \
+  --learning_rate 0.006\
+  --batch_size 128 \
+  --wv "bior3.3" \
+  --alpha 0.6 \
+  --l1_weight 5e-5 \
+  --m 1 \
   --enc_in 8 \
   --dec_in 8 \
   --c_out 8 \
   --des 'Exp' \
-  --itr 1  \
+  --itr 1 \
   --clusterGNN True \
-  --num_clusters 6 \
+  --d_model 128 \
+  --d_ff 128 \
+  --num_clusters 6
 
 python3 -u run.py \
-  --task_name long_term_forecast \
   --is_training 1 \
   --root_path ../dataset/exchange_rate/ \
   --data_path exchange_rate.csv \
@@ -81,15 +101,22 @@ python3 -u run.py \
   --data custom \
   --features M \
   --seq_len 96 \
-  --label_len 48 \
   --pred_len 720 \
-  --e_layers 2 \
-  --d_layers 1 \
-  --factor 3 \
+  --e_layers 1 \
+  --d_model 96 \
+  --d_ff 96 \
+  --learning_rate 0.003\
+  --batch_size 256 \
+  --wv "db1" \
+  --m 3 \
+  --alpha 1.0 \
+  --l1_weight 0.0 \
   --enc_in 8 \
   --dec_in 8 \
   --c_out 8 \
   --des 'Exp' \
-  --itr 1  \
+  --d_model 128 \
+  --d_ff 128 \
+  --itr 1 \
   --clusterGNN True \
   --num_clusters 6

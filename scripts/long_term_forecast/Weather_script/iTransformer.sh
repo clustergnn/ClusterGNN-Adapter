@@ -23,7 +23,8 @@ python3 -u run.py \
   --des 'Exp' \
   --d_model 512\
   --d_ff 512\
-  --itr 3 \
+  --itr 1 \
+  --clusterGNN True \
   --num_clusters 7
 
 
@@ -48,7 +49,8 @@ python3 -u run.py \
   --des 'Exp' \
   --d_model 512\
   --d_ff 512\
-  --itr 3 \
+  --itr 1 \
+  --clusterGNN True \
   --num_clusters 7
 
 
@@ -73,7 +75,8 @@ python3 -u run.py \
   --des 'Exp' \
   --d_model 512\
   --d_ff 512\
-  --itr 3 \
+  --itr 1 \
+  --clusterGNN True \
   --num_clusters 18
 
 
@@ -98,5 +101,6 @@ python3 -u run.py \
   --des 'Exp' \
   --d_model 512\
   --d_ff 512\
-  --itr 3 \
+  --itr 1 \
+  --clusterGNN True \
   --num_clusters 13

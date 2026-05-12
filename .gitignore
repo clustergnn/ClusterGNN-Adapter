@@ -5,6 +5,7 @@ __pycache__/
 *.ckpt
 *.pth
 *.txt
+vis/
 logs/
 results/
 txt_results/

@@ -9,7 +9,7 @@ import math
 plt.switch_backend('agg')
 
 
-def adjust_learning_rate(optimizer, epoch, args):
+def adjust_learning_rate(optimizer, epoch, args, scheduler=None, printout=True):
     # lr = args.learning_rate * (0.2 ** (epoch // 2))
     if args.lradj == 'type1':
         lr_adjust = {epoch: args.learning_rate * (0.5 ** ((epoch - 1) // 1))}
@@ -22,11 +22,16 @@ def adjust_learning_rate(optimizer, epoch, args):
         lr_adjust = {epoch: args.learning_rate if epoch < 3 else args.learning_rate * (0.9 ** ((epoch - 3) // 1))}
     elif args.lradj == "cosine":
         lr_adjust = {epoch: args.learning_rate /2 * (1 + math.cos(epoch / args.train_epochs * math.pi))}
+    elif args.lradj == 'constant':
+        lr_adjust = {epoch: args.learning_rate * 1}
+    elif args.lradj == 'TST':
+        lr_adjust = {epoch: scheduler.get_last_lr()[0]}
+        
     if epoch in lr_adjust.keys():
         lr = lr_adjust[epoch]
         for param_group in optimizer.param_groups:
             param_group['lr'] = lr
-        print('Updating learning rate to {}'.format(lr))
+        if printout: print('Updating learning rate to {}'.format(lr))
 
 
 class EarlyStopping:
@@ -104,7 +109,7 @@ def visual_forecast(
     import os
     from matplotlib.patches import FancyBboxPatch
     
-    # --- [1] 논문용 스타일 설정 ---
+    # --- [1] Paper-style visualization settings ---
     plt.rcParams.update({
         "font.family": "serif",
         "font.serif": ["STIXGeneral", "DejaVu Serif", "serif"],
@@ -117,9 +122,9 @@ def visual_forecast(
     x_input = np.arange(S)
     x_future = np.arange(S, S + P)
 
-    fig, ax = plt.subplots(figsize=(6.5, 2.6))  # ← width 줄임 (8 → 6.5)
+    fig, ax = plt.subplots(figsize=(6.5, 2.6))  
 
-    # --- [2] 컬러 팔레트 ---
+    # --- [2] Color palette ---
     c_actual = '#e74c3c'   # Red
     c_cluster = '#2980b9'  # Blue
     c_pred = '#0000FF'     # Pure Blue
@@ -136,7 +141,7 @@ def visual_forecast(
         zorder=3
     )
 
-    # 연결선 (History -> Future GT)
+    # Connection line (History -> Future GT)
     ax.plot(
         [S - 1, S],
         [input_1d[-1], true_1d[0]],
@@ -175,7 +180,7 @@ def visual_forecast(
         zorder=4
     )
 
-    # 연결선 (History -> Prediction)
+    # Connection line (History -> Prediction)
     ax.plot(
         [S - 1, S],
         [input_1d[-1], pred_1d[0]],
@@ -184,7 +189,7 @@ def visual_forecast(
         alpha=0.5
     )
 
-    # --- [7] 스타일링 ---
+    # --- [7] Styling ---
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
     ax.yaxis.grid(True, linestyle=':', alpha=0.4)
@@ -192,7 +197,7 @@ def visual_forecast(
     ax.set_xlabel('Time Step', fontsize=9)
     ax.set_ylabel('Value', fontsize=9)
 
-    # 🔥 Title 강조
+    # Highlight title
     if title is not None:
         ax.set_title(
             title,
@@ -201,7 +206,7 @@ def visual_forecast(
             pad=8
         )
 
-    # --- [8] 범례 순서 강제 지정 ---
+    # --- [8] Force legend order ---
     handles, labels = ax.get_legend_handles_labels()
 
     desired_order = [
@@ -224,17 +229,18 @@ def visual_forecast(
         ordered_labels,
         loc='lower left',
         frameon=True,
-        fontsize=8,        # ↑ legend text 크게
+        fontsize=8,        
         ncol=1,
-        handlelength=1.0,   # ↑ line 길이
-        handletextpad=0.4,   # ↓ 간격 줄임
+        handlelength=1.0,  
+        handletextpad=0.4,  
         borderpad=0.2,
         framealpha=0.5
     )
 
     plt.tight_layout()
 
-    # --- [9] 저장 ---
+    
+    # --- [9] Save figure ---
     save_dir = os.path.dirname(save_path)
     if save_dir:
         os.makedirs(save_dir, exist_ok=True)

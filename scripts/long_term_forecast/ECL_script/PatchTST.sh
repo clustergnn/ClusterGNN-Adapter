@@ -1,4 +1,4 @@
-export CUDA_VISIBLE_DEVICES=2
+export CUDA_VISIBLE_DEVICES=0
 
 model_name=PatchTST
 
@@ -23,6 +23,7 @@ python3 -u run.py \
   --des 'Exp' \
   --batch_size 16 \
   --itr 1 \
+  --clusterGNN True \
   --num_clusters 70
 
 python3 -u run.py \
@@ -46,6 +47,7 @@ python3 -u run.py \
   --des 'Exp' \
   --batch_size 16 \
   --itr 1 \
+  --clusterGNN True \
   --num_clusters 80
 
 python3 -u run.py \
@@ -69,6 +71,7 @@ python3 -u run.py \
   --des 'Exp' \
   --batch_size 16 \
   --itr 1 \
+  --clusterGNN True \
   --num_clusters 80
 
 python3 -u run.py \
@@ -92,4 +95,5 @@ python3 -u run.py \
   --des 'Exp' \
   --batch_size 16 \
   --itr 1 \
+  --clusterGNN True \
   --num_clusters 70

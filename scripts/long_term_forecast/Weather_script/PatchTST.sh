@@ -21,8 +21,9 @@ python3 -u run.py \
   --dec_in 21 \
   --c_out 21 \
   --des 'Exp' \
-  --itr 3 \
+  --itr 1 \
   --n_heads 4  \
+  --clusterGNN True \
   --num_clusters 7
 
 python3 -u run.py \
@@ -44,8 +45,9 @@ python3 -u run.py \
   --dec_in 21 \
   --c_out 21 \
   --des 'Exp' \
-  --itr 3 \
+  --itr 1 \
   --n_heads 16  \
+  --clusterGNN True \
   --num_clusters 7
 
 python3 -u run.py \
@@ -67,9 +69,10 @@ python3 -u run.py \
   --dec_in 21 \
   --c_out 21 \
   --des 'Exp' \
-  --itr 3 \
+  --itr 1 \
   --n_heads 4 \
   --batch_size 128 \
+  --clusterGNN True \
   --num_clusters 18
 
 python3 -u run.py \
@@ -91,7 +94,8 @@ python3 -u run.py \
   --dec_in 21 \
   --c_out 21 \
   --des 'Exp' \
-  --itr 3 \
+  --itr 1 \
   --n_heads 4 \
   --batch_size 128 \
+  --clusterGNN True \
   --num_clusters 13

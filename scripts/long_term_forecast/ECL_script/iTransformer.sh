@@ -1,8 +1,8 @@
-export CUDA_VISIBLE_DEVICES=2
+export CUDA_VISIBLE_DEVICES=0
 
 model_name=iTransformer
 
-python -u run.py \
+python3 -u run.py \
   --task_name long_term_forecast \
   --is_training 1 \
   --root_path ../dataset/electricity/ \
@@ -26,9 +26,10 @@ python -u run.py \
   --batch_size 16 \
   --learning_rate 0.0005 \
   --itr 1 \
+  --clusterGNN True \
   --num_clusters 70
 
-python -u run.py \
+python3 -u run.py \
   --task_name long_term_forecast \
   --is_training 1 \
   --root_path ../dataset/electricity/ \
@@ -52,10 +53,11 @@ python -u run.py \
   --batch_size 16 \
   --learning_rate 0.0005 \
   --itr 1 \
+  --clusterGNN True \
   --num_clusters 80
 
 
-python -u run.py \
+python3 -u run.py \
   --task_name long_term_forecast \
   --is_training 1 \
   --root_path ../dataset/electricity/ \
@@ -79,10 +81,11 @@ python -u run.py \
   --batch_size 16 \
   --learning_rate 0.0005 \
   --itr 1 \
+  --clusterGNN True \
   --num_clusters 80
 
 
-python -u run.py \
+python3 -u run.py \
   --task_name long_term_forecast \
   --is_training 1 \
   --root_path ../dataset/electricity/ \
@@ -106,4 +109,5 @@ python -u run.py \
   --batch_size 16 \
   --learning_rate 0.0005 \
   --itr 1 \
+  --clusterGNN True \
   --num_clusters 70

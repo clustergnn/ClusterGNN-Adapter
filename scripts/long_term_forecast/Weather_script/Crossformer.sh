@@ -24,7 +24,8 @@ python3 -u run.py \
   --d_ff 32 \
   --top_k 5 \
   --des 'Exp' \
-  --itr 3  \
+  --itr 1  \
+  --clusterGNN True \
   --num_clusters 7
 
 
@@ -50,7 +51,8 @@ python3 -u run.py \
   --d_ff 32 \
   --top_k 5 \
   --des 'Exp' \
-  --itr 7  \
+  --itr 1  \
+  --clusterGNN True \
   --num_clusters 7
 
 
@@ -77,7 +79,8 @@ python3 -u run.py \
   --d_ff 32 \
   --top_k 5 \
   --des 'Exp' \
-  --itr 3  \
+  --itr 1  \
+  --clusterGNN True \
   --num_clusters 18
 
 
@@ -103,5 +106,6 @@ python3 -u run.py \
   --d_ff 32 \
   --top_k 5 \
   --des 'Exp' \
-  --itr 3 \
+  --itr 1 \
+  --clusterGNN True \
   --num_clusters 13

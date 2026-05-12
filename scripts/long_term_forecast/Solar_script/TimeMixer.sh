@@ -1,133 +1,142 @@
 export CUDA_VISIBLE_DEVICES=0
 
 model_name=TimeMixer
-
 seq_len=96
-e_layers=3
-down_sampling_layers=3
+down_sampling_layers=2
 down_sampling_window=2
-learning_rate=0.01
-d_model=16
-d_ff=32
+learning_rate=0.001
 batch_size=32
-train_epochs=20
-patience=10
+train_epochs=10
+patience=3
+
+root_path=../dataset/solar/
+data_path=solar_AL.txt
 
 python3 -u run.py \
   --task_name long_term_forecast \
   --is_training 1 \
-  --root_path ../dataset/solar/ \
-  --data_path solar_AL.txt \
-  --model_id ECL_$seq_len'_'96 \
+  --root_path $root_path \
+  --data_path $data_path \
+  --model_id solar_96_96 \
   --model $model_name \
-  --data custom \
+  --data Solar \
   --features M \
   --seq_len $seq_len \
   --label_len 0 \
   --pred_len 96 \
-  --e_layers $e_layers \
+  --e_layers 3 \
   --d_layers 1 \
   --factor 3 \
-  --enc_in 321 \
-  --dec_in 321 \
-  --c_out 321 \
+  --enc_in 137 \
+  --dec_in 137 \
+  --c_out 137 \
   --des 'Exp' \
-  --itr 3 \
-  --d_model $d_model \
-  --d_ff $d_ff \
+  --itr 1 \
+  --use_norm 0 \
+  --d_model 512 \
+  --d_ff 2048 \
+  --channel_independence 0 \
   --batch_size $batch_size \
   --learning_rate $learning_rate \
   --train_epochs $train_epochs \
   --patience $patience \
   --down_sampling_layers $down_sampling_layers \
   --down_sampling_method avg \
-  --down_sampling_window $down_sampling_window \
-  --num_clusters 40
+  --down_sampling_window $down_sampling_window  \
+  --clusterGNN True \
+  --num_clusters 40 
 
 python3 -u run.py \
   --task_name long_term_forecast \
   --is_training 1 \
-  --root_path ../dataset/solar/ \
-  --data_path solar_AL.txt \
-  --model_id ECL_$seq_len'_'192 \
+  --root_path $root_path \
+  --data_path $data_path \
+  --model_id solar_96_192 \
   --model $model_name \
-  --data custom \
+  --data Solar \
   --features M \
   --seq_len $seq_len \
   --label_len 0 \
   --pred_len 192 \
-  --e_layers $e_layers \
-  --d_layers 1 \
+  --e_layers 3 \
   --factor 3 \
-  --enc_in 321 \
-  --dec_in 321 \
-  --c_out 321 \
+  --enc_in 137 \
+  --dec_in 137 \
+  --c_out 137 \
   --des 'Exp' \
-  --itr 3 \
-  --d_model $d_model \
-  --d_ff $d_ff \
+  --itr 1 \
+  --use_norm 0 \
+  --d_model 512 \
+  --d_ff 2048 \
+  --channel_independence 0 \
   --batch_size $batch_size \
   --learning_rate $learning_rate \
   --train_epochs $train_epochs \
   --patience $patience \
   --down_sampling_layers $down_sampling_layers \
   --down_sampling_method avg \
-  --down_sampling_window $down_sampling_window \
-  --num_clusters 2
+  --down_sampling_window $down_sampling_window  \
+  --clusterGNN True \
+  --num_clusters 2 
 
 python3 -u run.py \
   --task_name long_term_forecast \
   --is_training 1 \
-  --root_path ../dataset/solar/ \
-  --data_path solar_AL.txt \
-  --model_id ECL_$seq_len'_'336 \
+  --root_path $root_path \
+  --data_path $data_path \
+  --model_id solar_96_336 \
   --model $model_name \
-  --data custom \
+  --data Solar \
   --features M \
   --seq_len $seq_len \
   --label_len 0 \
   --pred_len 336 \
-  --e_layers $e_layers \
+  --e_layers 3 \
   --d_layers 1 \
   --factor 3 \
-  --enc_in 321 \
-  --dec_in 321 \
-  --c_out 321 \
+  --enc_in 137 \
+  --dec_in 137 \
+  --c_out 137 \
   --des 'Exp' \
-  --itr 3 \
-  --d_model $d_model \
-  --d_ff $d_ff \
+  --itr 1 \
+  --use_norm 0 \
+  --d_model 512 \
+  --d_ff 2048 \
+  --channel_independence 0 \
   --batch_size $batch_size \
   --learning_rate $learning_rate \
   --train_epochs $train_epochs \
   --patience $patience \
   --down_sampling_layers $down_sampling_layers \
   --down_sampling_method avg \
-  --down_sampling_window $down_sampling_window \
+  --down_sampling_window $down_sampling_window  \
+  --clusterGNN True \
   --num_clusters 40
 
 python3 -u run.py \
   --task_name long_term_forecast \
   --is_training 1 \
-  --root_path ../dataset/solar/ \
-  --data_path solar_AL.txt \
-  --model_id ECL_$seq_len'_'720 \
+  --root_path $root_path \
+  --data_path $data_path \
+  --model_id solar_96_720 \
   --model $model_name \
-  --data custom \
+  --data Solar \
   --features M \
   --seq_len $seq_len \
   --label_len 0 \
   --pred_len 720 \
-  --e_layers $e_layers \
+  --e_layers 3 \
   --d_layers 1 \
   --factor 3 \
-  --enc_in 321 \
-  --dec_in 321 \
-  --c_out 321 \
+  --enc_in 137 \
+  --dec_in 137 \
+  --c_out 137 \
   --des 'Exp' \
-  --itr 3 \
-  --d_model $d_model \
-  --d_ff $d_ff \
+  --itr 1 \
+  --use_norm 0 \
+  --d_model 512 \
+  --d_ff 2048 \
+  --channel_independence 0 \
   --batch_size $batch_size \
   --learning_rate $learning_rate \
   --train_epochs $train_epochs \
@@ -135,4 +144,5 @@ python3 -u run.py \
   --down_sampling_layers $down_sampling_layers \
   --down_sampling_method avg \
   --down_sampling_window $down_sampling_window \
+  --clusterGNN True \
   --num_clusters 40

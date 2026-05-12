@@ -218,13 +218,7 @@ class Model(nn.Module):
         )
         self.clusterGNN = configs.clusterGNN
         if self.clusterGNN:
-            self.clusterGNNAdapter = ClusterGNNAdapter(
-                num_nodes=configs.enc_in,
-                in_channels=configs.seq_len,
-                out_channels=configs.seq_len,
-                num_clusters=configs.num_clusters,
-                dropout=configs.dropout
-            ).float()
+            self.clusterGNNAdapter = ClusterGNNAdapter(configs).float()
 
 
         if self.task_name == 'long_term_forecast' or self.task_name == 'short_term_forecast':
@@ -512,9 +506,7 @@ class Model(nn.Module):
     def forward(self, x_enc, x_mark_enc, x_dec, x_mark_dec, mask=None):
         if self.task_name == 'long_term_forecast' or self.task_name == 'short_term_forecast':
             if self.clusterGNN:
-                x_enc = x_enc.permute(0, 2, 1) # >> (bsz, num_nodes, seq_len)
-                x_enc = self.clusterGNNAdapter(x_enc.transpose(0, 1)).transpose(0, 1)
-                x_enc = x_enc.permute(0, 2, 1)  # [B, L, N]
+                x_enc = self.clusterGNNAdapter(x_enc)
 
             dec_out = self.forecast(x_enc, x_mark_enc, x_dec, x_mark_dec)
             return dec_out

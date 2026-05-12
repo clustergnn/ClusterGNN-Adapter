@@ -11,6 +11,7 @@ import warnings
 import numpy as np
 from utils.dtw_metric import dtw, accelerated_dtw
 from utils.augmentation import run_augmentation, run_augmentation_single
+from torch.optim import lr_scheduler
 warnings.filterwarnings('ignore')
 
 
@@ -92,6 +93,13 @@ class Exp_Long_Term_Forecast(Exp_Basic):
         model_optim = self._select_optimizer()
         criterion = self._select_criterion()
 
+        if self.args.lradj == 'TST':
+            scheduler = lr_scheduler.OneCycleLR(optimizer=model_optim,
+                                                steps_per_epoch=train_steps,
+                                                pct_start=self.args.pct_start,
+                                                epochs=self.args.train_epochs,
+                                                max_lr=self.args.learning_rate)
+            
         if self.args.use_amp:
             scaler = torch.cuda.amp.GradScaler()
 
@@ -151,6 +159,11 @@ class Exp_Long_Term_Forecast(Exp_Basic):
                 else:
                     loss.backward()
                     model_optim.step()
+                    
+                if self.args.lradj == 'TST':
+                    adjust_learning_rate(model_optim, epoch + 1, self.args, scheduler, printout=False)
+                    scheduler.step()
+                    
 
             print("Epoch: {} cost time: {}".format(epoch + 1, time.time() - epoch_time))
             train_loss = np.average(train_loss)
@@ -163,8 +176,13 @@ class Exp_Long_Term_Forecast(Exp_Basic):
             if early_stopping.early_stop:
                 print("Early stopping")
                 break
-
-            adjust_learning_rate(model_optim, epoch + 1, self.args)
+            
+            
+            if self.args.lradj != 'TST':
+                adjust_learning_rate(model_optim, epoch + 1, self.args)
+            else:
+                adjust_learning_rate(model_optim, epoch + 1, self.args, scheduler)
+                
 
         best_model_path = path + '/' + 'checkpoint.pth'
         self.model.load_state_dict(torch.load(best_model_path))
@@ -229,7 +247,7 @@ class Exp_Long_Term_Forecast(Exp_Basic):
                 preds.append(pred)
                 trues.append(true)
                 
-                if i % 10 == 0:
+                if i % 50 == 0:
                     dataset = self.args.data_path.split('.')[0]
 
                     if self.args.clusterGNN:
@@ -282,13 +300,6 @@ class Exp_Long_Term_Forecast(Exp_Basic):
                             save_path=f'{save_dir}/{self.args.model}_channel{ch}_{i}.pdf'
                         )
                                             
-                if i % 20 == 0:
-                    input = batch_x.detach().cpu().numpy()
-                    if test_data.scale and self.args.inverse:
-                        shape = input.shape
-                        input = test_data.inverse_transform(input.reshape(shape[0] * shape[1], -1)).reshape(shape)
-                    gt = np.concatenate((input[0, :, -1], true[0, :, -1]), axis=0)
-                    pd = np.concatenate((input[0, :, -1], pred[0, :, -1]), axis=0)
 
     
         preds = np.concatenate(preds, axis=0)
@@ -299,16 +310,17 @@ class Exp_Long_Term_Forecast(Exp_Basic):
         print('test shape:', preds.shape, trues.shape)
 
         # result save
-        folder_path = './results_npy/' + setting + '/'
-        if not os.path.exists(folder_path):
-            os.makedirs(folder_path)
-
-
+      
         mae, mse, rmse, mape, mspe = metric(preds, trues)
         print(f'mse:{mse}, mae:{mae}, rmse:{rmse}, mape:{mape}, mspe:{mspe}')
-        np.save(folder_path + 'metrics.npy', np.array([mae, mse, rmse, mape, mspe]))
-        np.save(folder_path + 'pred.npy', preds)
-        np.save(folder_path + 'true.npy', trues)
+        
+        
+        # folder_path = './results_npy/' + setting + '/'
+        # if not os.path.exists(folder_path):
+        #     os.makedirs(folder_path)
+        # np.save(folder_path + 'metrics.npy', np.array([mae, mse, rmse, mape, mspe]))
+        # np.save(folder_path + 'pred.npy', preds)
+        # np.save(folder_path + 'true.npy', trues)
         
         # 경로 설정
         dataset = self.args.data_path.split('.')[0]  # 데이터셋 이름 추출 (확장자 제거)
@@ -324,7 +336,5 @@ class Exp_Long_Term_Forecast(Exp_Basic):
         with open(file_path, 'a') as f:
             f.write(setting + "\n")
             f.write(f"mse:{mse}, mae:{mae}, rmse:{rmse}, mape:{mape}, mspe:{mspe}\n\n")
-
-
 
         return
