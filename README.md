@@ -23,6 +23,7 @@ We introduce **ClusterGNN Adapter,** **a** **plug-and-play relational learning m
 ClusterGNN is a cluster-level graph propagation framework for modeling dynamic inter-variable dependencies in multivariate time series.
 
 The module consists of three components:
+
  **(1) cluster-level Gumbel-Softmax assignment**
       : dynamically groups variables into latent clusters
 
