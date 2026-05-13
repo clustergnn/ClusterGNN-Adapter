@@ -34,17 +34,17 @@ The module consists of three components:
 
 ## Usage
 
-1. The datasets can be obtained from [Google Drive](https://drive.google.com/file/d/1l51QsKvQPcqILT3DwfjCgx8Dsg2rpjot/view)
+1. Download the datasets from [Google Drive](https://drive.google.com/file/d/1l51QsKvQPcqILT3DwfjCgx8Dsg2rpjot/view)
 
-2. Train and evaluate the model. We provide all the above tasks under the folder ./scripts/. You can reproduce the results as the following examples:
+2. All scripts required to reproduce the experimental results are provided under `./scripts/`.
 
-**All Model & All Datasets**
+**Run all experiments**
 
 ```
 bash ./exp_all.sh
 ```
 
-**One Model Scipts** (Example Model: SimpleTM)
+**Run a specific model (example: SimpleTM)**
 
 ```
 bash ./scripts/multivariate_forecasting/Exchange_scripts/SimpleTM.sh
