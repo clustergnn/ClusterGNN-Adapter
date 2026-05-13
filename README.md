@@ -1,16 +1,13 @@
 # ClusterGNN Adapter
 
-
-
-We introduce **ClusterGNN Adapter,** **a** **plug-and-play relational learning module for multivariate time series forecasting (MTF) models.** The proposed adapter dynamically captures cluster-level inter-variable dependencies through Gumbel-Softmax-based graph construction and propagation, while preserving the original forecasting architecture. The propagated relational representations are adaptively fused with the original input, enabling existing MTF backbones **to effectively incorporate global dependency information without architectural modification.**
-
+We introduce **ClusterGNN Adapter, a plug-and-play relational learning module for multivariate time series forecasting (MTF) models.** The proposed adapter dynamically captures cluster-level inter-variable dependencies through Gumbel-Softmax-based structure learning and graph propagation, while preserving the original forecasting architecture. The propagated relational representations are adaptively fused with the original input, enabling existing MTF backbones to incorporate global dependency information **without architectural modification.**
 
 
 ## Overall Architecture
 
 ### [1] ClusterGNN Adapter
 
- The adapter can be seamlessly integrated into various forecasting backbones, such as iTransformer, PatchTST, TimeMixer, and SimpleTM, without modifying their original architectures.
+ The adapter can be seamlessly integrated into various forecasting backbones, such as PatchTST, iTransformer, TimeMixer, and SimpleTM, **without modifying their original architectures.**
 
 
 
@@ -30,7 +27,7 @@ The module consists of three components:
  **(2) edge-level dynamic graph construction**
       : learns probabilistic inter-cluster connections
 
- **(3) cluster graph propagation with cluster-to-node projection**
+ **(3) cluster graph propagation and cluster-to-node projectionn**
       : propagates relational information and restores it to the original variable space
 
 ![image-20260512211956790](/Figures/ClusterGNN_Architecture.png)
@@ -60,11 +57,11 @@ bash ./scripts/multivariate_forecasting/Solar_scripts/SimpleTM.sh
 
 ## Main Results
 
-Table 1 reports the forecasting performance of <u>six baseline models</u> and their <u>ClusterGNN-enhanced variants</u> across multiple benchmark datasets. **Better results between each baseline pair are highlighted in bold**, while the best overall results for each dataset are marked in red.
+Table 1 reports the forecasting performance of <u>six baseline models</u> and their <u>ClusterGNN-enhanced variants</u> across multiple benchmark datasets. **Better results within each baseline pair are highlighted in bold**, while the best overall results for each dataset are marked in red.
 
 ![image-20260512212720547](/Figures/main_results.png)
 
-Especially, **PatchTST** shows the largest performance improvement, achieving an average **MSE reduction of 17.7%.** Figure 3 further illustrates qualitative forecasting results on the Exchange dataset, where the ClusterGNN-enhanced PatchTST produces more stable and accurate long-term predictions. 
+In particular, **PatchTST** shows the largest performance improvement, achieving an Average **17.7% MSE reduction**. Figure 3 further illustrates qualitative forecasting results on the Exchange dataset, where the PatchTST enhanced with ClusterGNN produces more stable and accurate long-term predictions. 
 
 
 
@@ -76,8 +73,7 @@ Especially, **PatchTST** shows the largest performance improvement, achieving an
 
 ## Acknowledgement
 
-We appreciate the following GitHub repos a lot for their valuable code and efforts.
-
+We gratefully acknowledge the following open-source repositories for providing valuable implementations and experimental foundations.
 - SimpleTM (https://github.com/vsingh-group/SimpleTM)
 - TimeXer (https://github.com/thuml/TimeXer)
 - Time-Series-Library (https://github.com/thuml/Time-Series-Library/tree/main/models ) 
